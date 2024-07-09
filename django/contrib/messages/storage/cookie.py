@@ -18,9 +18,7 @@ class MessageEncoder(json.JSONEncoder):
         if isinstance(obj, Message):
             # Using 0/1 here instead of False/True to produce more compact json
             is_safedata = 1 if isinstance(obj.message, SafeData) else 0
-            message = [self.message_key, is_safedata, obj.level, obj.message]
-            if obj.extra_tags:
-                message.append(obj.extra_tags)
+            message = [self.message_key, is_safedata, obj.level, obj.message, obj.extra_tags or None]
             return message
         return super().default(obj)
 
@@ -35,7 +33,7 @@ class MessageDecoder(json.JSONDecoder):
             if obj[0] == MessageEncoder.message_key:
                 if obj[1]:
                     obj[3] = mark_safe(obj[3])
-                return Message(*obj[2:])
+                return Message(obj[2], obj[3], extra_tags=obj[4] if obj[4] is not None else "")
             return [self.process_messages(item) for item in obj]
         if isinstance(obj, dict):
             return {key: self.process_messages(value)
